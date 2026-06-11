@@ -394,22 +394,27 @@ export default function AdminPage() {
   )
 
   return (
-    <div className="flex h-screen overflow-hidden" style={{ background: '#111b21' }}>
-      {/* Desktop: sidebar + chat side by side */}
-      {/* Mobile: sidebar OR chat (controlled by showChat) */}
+    <div className="flex w-screen h-screen overflow-hidden" style={{ background: '#111b21' }}>
 
-      {/* Sidebar — hidden on mobile when chat is open */}
+      {/* MOBILE: mostra UM painel por vez em tela cheia */}
+      {/* DESKTOP: sidebar fixa + chat ao lado */}
+
+      {/* Sidebar */}
       <div className={`
-        ${showChat ? 'hidden' : 'flex'} md:flex
-        w-full md:w-[360px] flex-shrink-0 border-r border-[#2a3942]
+        flex-col h-full
+        ${showChat ? 'hidden' : 'flex'}
+        w-full
+        md:flex md:w-[360px] md:flex-shrink-0 md:border-r md:border-[#2a3942]
       `}>
         {Sidebar}
       </div>
 
-      {/* Chat — hidden on mobile when sidebar is shown */}
+      {/* Chat */}
       <div className={`
-        ${showChat ? 'flex' : 'hidden'} md:flex
-        flex-1 flex-col overflow-hidden
+        flex-col h-full overflow-hidden
+        ${showChat ? 'flex' : 'hidden'}
+        w-full
+        md:flex md:flex-1
       `}>
         {ChatPanel}
       </div>
