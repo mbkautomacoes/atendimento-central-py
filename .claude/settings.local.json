@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --no-git --import-alias '@/*' -y)"
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --no-git --import-alias '@/*' -y)",
+      "Bash(curl -s -X POST https://iysihehwngjuwmsaydls.supabase.co/auth/v1/admin/users -H 'apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml5c2loZWh3bmdqdXdtc2F5ZGxzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2ODQzMTA2OCwiZXhwIjoyMDg0MDA3MDY4fQ.wl4hKohgdUi8LQ6HWVcWHR28qxvzdkP8TQNhqQqyAZg' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml5c2loZWh3bmdqdXdtc2F5ZGxzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2ODQzMTA2OCwiZXhwIjoyMDg0MDA3MDY4fQ.wl4hKohgdUi8LQ6HWVcWHR28qxvzdkP8TQNhqQqyAZg' -H 'Content-Type: application/json' -d '{\"email\": \"atendimento@centralpy.com.br\", \"password\": \"pycentral$$atendimento\", \"email_confirm\": true}')"
     ]
   }
 }
