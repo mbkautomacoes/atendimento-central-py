@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
@@ -9,32 +9,33 @@ interface Conversation {
   lead_name: string
   status: string
   updated_at: string
-  messages?: { created_at: string }[]
 }
 
 export default function AdminPage() {
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [loading, setLoading] = useState(true)
-  const [user, setUser] = useState<any>(null)
+  const [email, setEmail] = useState('')
   const router = useRouter()
+  const channelRef = useRef<any>(null)
 
   useEffect(() => {
     checkAuth()
-    loadConversations()
-    subscribeToConversations()
+    return () => {
+      if (channelRef.current) {
+        channelRef.current.unsubscribe()
+      }
+    }
   }, [])
 
   async function checkAuth() {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
+    const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       router.push('/admin/login')
       return
     }
-
-    setUser(user)
+    setEmail(user.email || '')
+    await loadConversations()
+    subscribeToConversations()
   }
 
   async function loadConversations() {
@@ -54,24 +55,18 @@ export default function AdminPage() {
   }
 
   function subscribeToConversations() {
-    const channel = supabase
-      .channel('conversations')
+    if (channelRef.current) {
+      channelRef.current.unsubscribe()
+    }
+
+    channelRef.current = supabase
+      .channel('admin-conversations')
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'conversations',
-        },
-        () => {
-          loadConversations()
-        }
+        { event: '*', schema: 'public', table: 'conversations' },
+        () => { loadConversations() }
       )
       .subscribe()
-
-    return () => {
-      channel.unsubscribe()
-    }
   }
 
   async function handleLogout() {
@@ -89,12 +84,11 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      {/* Header */}
       <div className="bg-blue-600 text-white p-4 shadow-md">
         <div className="max-w-6xl mx-auto flex justify-between items-center">
           <h1 className="text-2xl font-bold">Painel Atendente</h1>
           <div className="flex items-center gap-4">
-            <span className="text-sm">{user?.email}</span>
+            <span className="text-sm">{email}</span>
             <button
               onClick={handleLogout}
               className="bg-blue-700 hover:bg-blue-800 px-4 py-2 rounded transition"
@@ -105,7 +99,6 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {/* Content */}
       <div className="max-w-6xl mx-auto p-6">
         <h2 className="text-xl font-bold text-gray-800 mb-4">
           Conversas Recentes
@@ -125,9 +118,7 @@ export default function AdminPage() {
               >
                 <div className="flex justify-between items-center">
                   <div>
-                    <h3 className="font-bold text-gray-800">
-                      {conv.lead_name}
-                    </h3>
+                    <h3 className="font-bold text-gray-800">{conv.lead_name}</h3>
                     <p className="text-sm text-gray-500">
                       {new Date(conv.updated_at).toLocaleString('pt-BR')}
                     </p>
@@ -141,11 +132,7 @@ export default function AdminPage() {
                           : 'bg-gray-100 text-gray-800'
                     }`}
                   >
-                    {conv.status === 'new'
-                      ? 'Nova'
-                      : conv.status === 'open'
-                        ? 'Aberta'
-                        : 'Fechada'}
+                    {conv.status === 'new' ? 'Nova' : conv.status === 'open' ? 'Aberta' : 'Fechada'}
                   </span>
                 </div>
               </button>
