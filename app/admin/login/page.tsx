@@ -15,80 +15,77 @@ export default function LoginPage() {
     e.preventDefault()
     setError('')
     setLoading(true)
-
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) throw error
-
       router.push('/admin')
-    } catch (error: any) {
-      setError(error.message || 'Erro ao fazer login')
+    } catch (err: any) {
+      setError('Email ou senha incorretos')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 to-blue-600 p-4">
-      <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
-        <h1 className="text-3xl font-bold text-center mb-2 text-gray-800">
-          Painel Atendente
-        </h1>
-        <p className="text-center text-gray-600 mb-8">
-          Faça login para atender leads
-        </p>
-
-        {error && (
-          <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm">
-            {error}
+    <div className="min-h-screen w-full flex items-center justify-center bg-[#111b21] px-4 py-8">
+      <div className="w-full max-w-sm">
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <div className="w-20 h-20 bg-[#25d366] rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-white font-bold text-2xl">CP</span>
           </div>
-        )}
+          <h1 className="text-[#e9edef] text-2xl font-light">Central PY</h1>
+          <p className="text-[#8696a0] text-sm mt-1">Painel de Atendimento</p>
+        </div>
 
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="seu@email.com"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-              disabled={loading}
-            />
-          </div>
+        {/* Card */}
+        <div className="bg-[#202c33] rounded-2xl p-6 shadow-xl">
+          {error && (
+            <div className="mb-4 p-3 bg-red-900/30 border border-red-700 text-red-400 rounded-xl text-sm text-center">
+              {error}
+            </div>
+          )}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Senha
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="•••••••••"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-              disabled={loading}
-            />
-          </div>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label className="block text-[#8696a0] text-xs font-medium mb-2 uppercase tracking-wide">
+                Email
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="seu@email.com"
+                autoComplete="email"
+                className="w-full bg-[#2a3942] text-[#d1d7db] placeholder-[#8696a0] rounded-xl px-4 py-3 outline-none text-sm focus:ring-2 focus:ring-[#25d366]"
+                disabled={loading}
+              />
+            </div>
 
-          <button
-            type="submit"
-            disabled={loading || !email || !password}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? 'Entrando...' : 'Entrar'}
-          </button>
-        </form>
+            <div>
+              <label className="block text-[#8696a0] text-xs font-medium mb-2 uppercase tracking-wide">
+                Senha
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="••••••••"
+                autoComplete="current-password"
+                className="w-full bg-[#2a3942] text-[#d1d7db] placeholder-[#8696a0] rounded-xl px-4 py-3 outline-none text-sm focus:ring-2 focus:ring-[#25d366]"
+                disabled={loading}
+              />
+            </div>
 
-        <p className="text-center text-sm text-gray-600 mt-6">
-          Teste com credenciais do seu Supabase
-        </p>
+            <button
+              type="submit"
+              disabled={loading || !email || !password}
+              className="w-full bg-[#25d366] hover:bg-[#22c35e] active:bg-[#1da851] text-white font-semibold py-3 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed text-sm mt-2"
+            >
+              {loading ? 'Entrando...' : 'Entrar'}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   )
