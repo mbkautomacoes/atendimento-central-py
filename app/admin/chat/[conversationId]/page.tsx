@@ -28,15 +28,18 @@ export default function AdminChatPage({
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const channelRef = useRef<any>(null)
   const router = useRouter()
 
   const conversationId = params.conversationId
 
   useEffect(() => {
     checkAuth()
-    loadConversation()
-    loadMessages()
-    subscribeToMessages()
+    return () => {
+      if (channelRef.current) {
+        channelRef.current.unsubscribe()
+      }
+    }
   }, [conversationId])
 
   useEffect(() => {
@@ -44,16 +47,14 @@ export default function AdminChatPage({
   }, [messages])
 
   async function checkAuth() {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
+    const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       router.push('/admin/login')
       return
     }
-
-    setUser(user)
+    await loadConversation()
+    await loadMessages()
+    subscribeToMessages()
   }
 
   async function loadConversation() {
@@ -89,8 +90,12 @@ export default function AdminChatPage({
   }
 
   function subscribeToMessages() {
-    const channel = supabase
-      .channel(`messages:${conversationId}`)
+    if (channelRef.current) {
+      channelRef.current.unsubscribe()
+    }
+
+    channelRef.current = supabase
+      .channel(`admin-chat-${conversationId}`)
       .on(
         'postgres_changes',
         {
@@ -104,10 +109,6 @@ export default function AdminChatPage({
         }
       )
       .subscribe()
-
-    return () => {
-      channel.unsubscribe()
-    }
   }
 
   async function sendMessage(e: React.FormEvent) {
@@ -127,19 +128,11 @@ export default function AdminChatPage({
       if (error) throw error
       setNewMessage('')
 
-      // Update conversation status to open if new
-      if (conversation?.status === 'new') {
-        await supabase
-          .from('conversations')
-          .update({ status: 'open', updated_at: new Date().toISOString() })
-          .eq('id', conversationId)
-      } else {
-        // Just update timestamp
-        await supabase
-          .from('conversations')
-          .update({ updated_at: new Date().toISOString() })
-          .eq('id', conversationId)
-      }
+      const newStatus = conversation?.status === 'new' ? 'open' : conversation?.status
+      await supabase
+        .from('conversations')
+        .update({ status: newStatus, updated_at: new Date().toISOString() })
+        .eq('id', conversationId)
     } catch (error) {
       console.error('Erro ao enviar mensagem:', error)
       alert('Erro ao enviar mensagem')
@@ -162,20 +155,13 @@ export default function AdminChatPage({
 
   return (
     <div className="flex flex-col h-screen bg-gray-100">
-      {/* Header */}
       <div className="bg-blue-600 text-white p-4 shadow-md">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-xl font-bold">
-              {conversation?.lead_name || 'Chat'}
-            </h1>
+            <h1 className="text-xl font-bold">{conversation?.lead_name || 'Chat'}</h1>
             <p className="text-sm opacity-90">
               Status:{' '}
-              {conversation?.status === 'new'
-                ? 'Nova'
-                : conversation?.status === 'open'
-                  ? 'Aberta'
-                  : 'Fechada'}
+              {conversation?.status === 'new' ? 'Nova' : conversation?.status === 'open' ? 'Aberta' : 'Fechada'}
             </p>
           </div>
           <button
@@ -187,7 +173,6 @@ export default function AdminChatPage({
         </div>
       </div>
 
-      {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full text-gray-500">
@@ -197,28 +182,18 @@ export default function AdminChatPage({
           messages.map((msg) => (
             <div
               key={msg.id}
-              className={`flex ${
-                msg.sender_type === 'agent' ? 'justify-end' : 'justify-start'
-              }`}
+              className={`flex ${msg.sender_type === 'agent' ? 'justify-end' : 'justify-start'}`}
             >
               <div
                 className={`max-w-xs px-4 py-2 rounded-lg ${
-                  msg.sender_type === 'agent'
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-white text-gray-800'
+                  msg.sender_type === 'agent' ? 'bg-blue-500 text-white' : 'bg-white text-gray-800'
                 }`}
               >
                 <p className="text-xs opacity-75 mb-1">
                   {msg.sender_type === 'agent' ? 'Você' : conversation?.lead_name}
                 </p>
                 <p className="text-sm">{msg.message}</p>
-                <p
-                  className={`text-xs mt-1 ${
-                    msg.sender_type === 'agent'
-                      ? 'text-blue-100'
-                      : 'text-gray-500'
-                  }`}
-                >
+                <p className={`text-xs mt-1 ${msg.sender_type === 'agent' ? 'text-blue-100' : 'text-gray-500'}`}>
                   {new Date(msg.created_at).toLocaleTimeString('pt-BR')}
                 </p>
               </div>
@@ -228,7 +203,6 @@ export default function AdminChatPage({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
       <div className="bg-white border-t border-gray-300 p-4">
         <form onSubmit={sendMessage} className="flex gap-2">
           <input
