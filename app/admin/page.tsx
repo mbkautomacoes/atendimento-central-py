@@ -37,15 +37,21 @@ export default function AdminPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const convChannelRef = useRef<any>(null)
   const msgChannelRef = useRef<any>(null)
+  const pollConvRef = useRef<any>(null)
+  const pollMsgRef = useRef<any>(null)
   const notifPermRef = useRef(false)
   const router = useRouter()
 
   useEffect(() => {
     checkAuth()
     setupNotifications()
+    // Polling conversas a cada 10s
+    pollConvRef.current = setInterval(() => loadConversations(), 10000)
     return () => {
       convChannelRef.current?.unsubscribe()
       msgChannelRef.current?.unsubscribe()
+      clearInterval(pollConvRef.current)
+      clearInterval(pollMsgRef.current)
     }
   }, [])
 
@@ -55,7 +61,11 @@ export default function AdminPage() {
       loadMessages(selectedConv.id)
       subscribeToMessages(selectedConv.id)
       setUnreadIds(prev => { const n = new Set(prev); n.delete(selectedConv.id); return n })
+      // Polling mensagens a cada 5s
+      clearInterval(pollMsgRef.current)
+      pollMsgRef.current = setInterval(() => loadMessages(selectedConv.id), 5000)
     }
+    return () => clearInterval(pollMsgRef.current)
   }, [selectedConv?.id])
 
   useEffect(() => {

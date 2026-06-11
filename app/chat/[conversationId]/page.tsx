@@ -28,16 +28,30 @@ export default function ChatPage({ params }: { params: { conversationId: string 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const channelRef = useRef<any>(null)
+  const pollRef = useRef<any>(null)
   const { conversationId } = params
 
   useEffect(() => {
     init()
-    return () => { channelRef.current?.unsubscribe() }
+    // Polling fallback a cada 5s (garante atualização mesmo se Realtime falhar no mobile)
+    pollRef.current = setInterval(() => {
+      loadMessages()
+    }, 5000)
+    return () => {
+      channelRef.current?.unsubscribe()
+      clearInterval(pollRef.current)
+    }
   }, [conversationId])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  async function loadMessages() {
+    const { data } = await supabase.from('messages').select('*')
+      .eq('conversation_id', conversationId).order('created_at', { ascending: true })
+    if (data) setMessages(data)
+  }
 
   async function init() {
     const [convRes, msgsRes] = await Promise.all([
@@ -51,7 +65,7 @@ export default function ChatPage({ params }: { params: { conversationId: string 
     channelRef.current?.unsubscribe()
     channelRef.current = supabase.channel(`lead-${conversationId}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${conversationId}` },
-        (p) => setMessages(prev => [...prev, p.new as Message]))
+        () => loadMessages())
       .subscribe()
   }
 
